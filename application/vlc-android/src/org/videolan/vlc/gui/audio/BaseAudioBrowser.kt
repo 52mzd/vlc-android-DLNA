@@ -467,6 +467,7 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
             }
             MediaLibraryItem.TYPE_ALBUM -> {
                 createCtxPlaylistAlbumFlags().apply {
+                    remove(CTX_RENAME)
                     if (item.tracksCount > 2) add(CTX_PLAY_SHUFFLE)
                     if ((item as? Album)?.isFavorite == true) add(CTX_FAV_REMOVE) else add(CTX_FAV_ADD)
                 }
