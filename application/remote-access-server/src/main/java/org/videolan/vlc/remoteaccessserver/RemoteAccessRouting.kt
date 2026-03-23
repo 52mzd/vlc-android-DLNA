@@ -1255,6 +1255,38 @@ fun Route.setupRouting(appContext: Context, scope: CoroutineScope) {
             runCatching { if (dstFile.exists()) dstFile.delete() }
             return@get
         }
+        // Stream an audio file for in-browser playback
+        get("/stream") {
+            if (!settings.serveAudios(appContext)) {
+                call.respond(HttpStatusCode.Forbidden)
+                return@get
+            }
+            val id = call.request.queryParameters["id"] ?: run {
+                call.respond(HttpStatusCode.BadRequest, "Missing id parameter")
+                return@get
+            }
+            val media = appContext.getFromMl { getMedia(id.toLong()) }
+            if (media == null) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+            val path = media.uri.path
+            if (path == null || !media.uri.scheme.isSchemeFile()) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+            val file = File(path)
+            if (!file.exists() || !file.canRead()) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, file.name)
+                    .toString()
+            )
+            call.respondFile(file)
+        }
         //Change the favorite state of a media
         get("/favorite") {
             val type = call.request.queryParameters["type"] ?: "media"

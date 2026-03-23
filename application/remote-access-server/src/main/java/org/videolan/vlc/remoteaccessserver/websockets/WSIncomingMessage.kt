@@ -58,7 +58,8 @@ enum class IncomingMessageType(private val type: String, val controlRequired: Bo
     DELETE_MEDIA("delete-media"),
     MOVE_MEDIA_BOTTOM("move-media-bottom"),
     MOVE_MEDIA_TOP("move-media-top"),
-    REMOTE("remote" );
+    REMOTE("remote" ),
+    SET_BROWSER_AUDIO("set-browser-audio");
 
     override fun toString(): String = type
 

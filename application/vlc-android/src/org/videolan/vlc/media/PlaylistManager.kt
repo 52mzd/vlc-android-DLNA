@@ -150,6 +150,8 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         private set
     var isBenchmark = false
     var isHardware = false
+    var browserAudioActive = false
+    private var preBrowserVolume = -1
     private var parsed = false
     var savedTime = 0L
     private var random = SecureRandom()
@@ -568,6 +570,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
             media.setEventListener(this@PlaylistManager)
             player.startPlayback(media, mediaplayerEventListener, start)
             player.setSlaves(media, mw)
+            if (browserAudioActive) player.setVolume(0)
             newMedia = true
             determinePrevAndNextIndices()
             service.onNewPlayback()
@@ -584,6 +587,18 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
 
     fun onServiceDestroyed() {
         player.release()
+    }
+
+    fun setBrowserAudio(enable: Boolean) {
+        if (browserAudioActive == enable) return
+        browserAudioActive = enable
+        if (enable) {
+            preBrowserVolume = player.getVolume()
+            player.setVolume(0)
+        } else {
+            player.setVolume(if (preBrowserVolume >= 0) preBrowserVolume else 100)
+            preBrowserVolume = -1
+        }
     }
 
     @MainThread

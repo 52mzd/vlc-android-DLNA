@@ -96,6 +96,12 @@ object RemoteAccessWebSockets {
             } finally {
                 webSocketSessions.remove(sessionId)?.close()
                 if (BuildConfig.DEBUG) Log.d(TAG, "WebSockets: Removed and closed session: $sessionId")
+                if (webSocketSessions.isEmpty()) {
+                    val service = RemoteAccessServer.getInstance(context).service
+                    withContext(Dispatchers.Main) {
+                        service?.playlistManager?.setBrowserAudio(false)
+                    }
+                }
             }
         }
     }
@@ -240,6 +246,9 @@ object RemoteAccessWebSockets {
                 }
             }
             REMOTE -> incomingMessage.stringValue?.let { action -> VideoPlayerActivity.videoRemoteFlow.emit(action) }
+            SET_BROWSER_AUDIO -> {
+                service?.playlistManager?.setBrowserAudio(incomingMessage.id == 1)
+            }
         }
         return true
     }
