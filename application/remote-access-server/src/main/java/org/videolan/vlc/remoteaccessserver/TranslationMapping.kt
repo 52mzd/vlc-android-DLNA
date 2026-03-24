@@ -170,5 +170,6 @@ object TranslationMapping {
         COPIED(R.string.generic_copied_to_clipboard),
         PLAY_ON_BROWSER(R.string.ra_play_on_browser),
         PLAY_ON_PHONE(R.string.ra_play_on_device),
+        BROWSER_AUDIO_UNSUPPORTED_FORMAT(R.string.ra_browser_audio_unsupported_format),
     }
 }
