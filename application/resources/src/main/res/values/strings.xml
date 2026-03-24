@@ -1351,6 +1351,7 @@
     <string name="ra_otp_title">Remote access login attempt</string>
     <string name="ra_otp_subtitle">If it\'s you, enter this code on the other device</string>
     <string name="ra_otp_not_me">It\'s not me</string>
+    <string name="ra_output">Audio output</string>
     <string name="ra_play_on_browser">Play on browser</string>
     <string name="ra_play_on_device">Play on device</string>
     <string name="ra_browser_audio_unsupported_format">This audio format is not supported by your browser</string>
