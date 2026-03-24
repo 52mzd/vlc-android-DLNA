@@ -168,5 +168,7 @@ object TranslationMapping {
         FEEDBACK_GENERATED_EXPLANATION(R.string.remote_access_feedback_generated_explanation),
         FEEDBACK_GENERATED_FILE_EXPLANATION(R.string.remote_access_feedback_file_explanation),
         COPIED(R.string.generic_copied_to_clipboard),
+        PLAY_ON_BROWSER(R.string.ra_play_on_browser),
+        PLAY_ON_PHONE(R.string.ra_play_on_device),
     }
 }

@@ -1351,6 +1351,8 @@
     <string name="ra_otp_title">Remote access login attempt</string>
     <string name="ra_otp_subtitle">If it\'s you, enter this code on the other device</string>
     <string name="ra_otp_not_me">It\'s not me</string>
+    <string name="ra_play_on_browser">Play on browser</string>
+    <string name="ra_play_on_device">Play on device</string>
 
     <string name="ra_onboarding_welcome_desc">Welcome in VLC for Android\'s remote access\nBy enabling it you will be able to control this device\'s playback and more</string>
     <string name="ra_onboarding_how_title">Control your device</string>
