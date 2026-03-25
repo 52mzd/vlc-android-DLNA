@@ -14,7 +14,8 @@ data class SubtitleItem(
     val hearingImpaired: Boolean,
     val rating: Float,
     val downloadNumber: Long,
-    var fileName: String = ""
+    var fileName: String = "",
+    var downloadError: Boolean = false
 ) {
     fun getReadableDownloadNumber() = downloadNumber.readableNumber()
 }

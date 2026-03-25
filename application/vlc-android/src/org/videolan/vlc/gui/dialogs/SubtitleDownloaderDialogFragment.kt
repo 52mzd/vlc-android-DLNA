@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -70,20 +71,33 @@ class SubtitleDownloaderDialogFragment : VLCBottomSheetDialogFragment() {
         for (subtitleEvent in channel) if (isActive) when (subtitleEvent) {
             is SubtitleClick -> when (subtitleEvent.item.state) {
                 State.NotDownloaded -> {
-                     withContext(Dispatchers.IO) {
+                    var downloadAvailable = true
+                    withContext(Dispatchers.IO) {
+                        Log.i("SubtitleDownload", "Launching download for ${subtitleEvent.item.idSubtitle}")
                         val downloadLink = OpenSubtitleRepository.getInstance()
                             .getDownloadLink(subtitleEvent.item.fileId)
-                         val openSubtitlesLimit = OpenSubtitlesLimit(
-                             downloadLink.requests,
-                             downloadLink.requests + downloadLink.remaining,
-                             downloadLink.resetTimeUtc
-                         )
-                         OpenSubtitlesUtils.saveLimit(settings, openSubtitlesLimit)
-                         viewModel.observableLimit.set(openSubtitlesLimit)
-                         subtitleEvent.item.zipDownloadLink = downloadLink.link
-                         subtitleEvent.item.fileName = downloadLink.fileName
+                        val openSubtitlesLimit = OpenSubtitlesLimit(
+                            downloadLink.requests,
+                            downloadLink.requests + downloadLink.remaining,
+                            downloadLink.resetTimeUtc
+                        )
+                        Log.i("SubtitleDownload", "Subtitle download retrieved: ${downloadLink.link} - ${downloadLink.fileName}")
+                        try {
+                            OpenSubtitlesUtils.saveLimit(settings, openSubtitlesLimit)
+                            viewModel.observableLimit.set(openSubtitlesLimit)
+                            subtitleEvent.item.zipDownloadLink = downloadLink.link
+                            subtitleEvent.item.fileName = downloadLink.fileName
+                            subtitleEvent.item.downloadError = false
+                        } catch (e: Exception) {
+                            Log.w("SubtitleDownload", e.message, e)
+                            downloadAvailable = false
+                            subtitleEvent.item.downloadError = true
+                            withContext(Dispatchers.Main) {
+                                downloadAdapter.notifyItemChanged(downloadAdapter.dataset?.indexOf(subtitleEvent.item) ?: 0)
+                            }
+                        }
                     }
-                    VLCDownloadManager.download(requireActivity(), subtitleEvent.item, true)
+                    if (downloadAvailable) VLCDownloadManager.download(requireActivity(), subtitleEvent.item, true)
                 }
                 State.Downloaded -> deleteSubtitleDialog(requireActivity(), DialogInterface.OnClickListener { _, _ ->
                     subtitleEvent.item.mediaUri.path?.let { viewModel.deleteSubtitle(it, subtitleEvent.item.idSubtitle) }

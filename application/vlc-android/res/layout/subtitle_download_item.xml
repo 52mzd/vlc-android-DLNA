@@ -106,6 +106,16 @@
                 app:barrierDirection="start"
                 app:constraint_referenced_ids="loading,download_sub" />
 
+        <View
+                android:id="@+id/view3"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginStart="16dp"
+                android:background="?attr/default_divider"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
         <TextView
                 android:id="@+id/textView39"
                 android:layout_width="wrap_content"
@@ -114,9 +124,9 @@
                 android:layout_marginBottom="8dp"
                 android:gravity="center_vertical"
                 android:includeFontPadding="false"
-                android:textColor="?attr/font_default"
                 android:text="@{subtitleItem.getReadableDownloadNumber()}"
-                android:visibility="@{subtitleItem.downloadNumber > 0 ? View.VISIBLE : View.GONE}"
+                android:textColor="?attr/font_default"
+                android:visibility="@{subtitleItem.downloadNumber > 0 &amp;&amp; !subtitleItem.downloadError ? View.VISIBLE : View.INVISIBLE}"
                 app:drawableStartCompat="@drawable/ic_download"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="@+id/sub_title"
@@ -129,7 +139,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:orientation="horizontal"
-                android:visibility="@{subtitleItem.rating > 0 ? View.VISIBLE : View.GONE}"
+                android:visibility="@{subtitleItem.rating > 0 &amp;&amp; !subtitleItem.downloadError ? View.VISIBLE : View.GONE}"
                 app:layout_constraintBottom_toBottomOf="@+id/textView39"
                 app:layout_constraintStart_toEndOf="@+id/textView39"
                 app:layout_constraintTop_toTopOf="@+id/textView39"
@@ -172,15 +182,19 @@
                     tools:srcCompat="@drawable/ic_star_border" />
         </LinearLayout>
 
-        <View
-                android:id="@+id/view3"
+        <TextView
+                android:id="@+id/textView10"
                 android:layout_width="0dp"
-                android:layout_height="1dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:background="?attr/default_divider"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginEnd="16dp"
+                android:text="@string/open_subs_download_link_error"
+                android:textColor="@color/red500transparent"
+                android:visibility="@{subtitleItem.downloadError ? View.VISIBLE : View.GONE}"
+                app:layout_constraintBottom_toBottomOf="@+id/textView39"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/textView39" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

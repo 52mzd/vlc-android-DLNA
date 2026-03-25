@@ -10,7 +10,7 @@ import org.videolan.vlc.databinding.SubtitleDownloadItemBinding
 import java.util.Locale
 
 internal class SubtitlesAdapter(private val eventActor: SendChannel<SubtitleEvent>) : RecyclerView.Adapter<SubtitlesAdapter.ViewHolder>() {
-    private var dataset: List<SubtitleItem>? = null
+    var dataset: List<SubtitleItem>? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
