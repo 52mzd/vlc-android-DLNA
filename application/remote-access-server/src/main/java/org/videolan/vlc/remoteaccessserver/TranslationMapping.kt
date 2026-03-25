@@ -171,6 +171,7 @@ object TranslationMapping {
         AUDIO_OUTPUT(R.string.ra_output),
         PLAY_ON_BROWSER(R.string.ra_play_on_browser),
         PLAY_ON_PHONE(R.string.ra_play_on_device),
+        MEDIA_NOT_FOUND(R.string.ra_browser_audio_not_found),
         BROWSER_AUDIO_UNSUPPORTED_FORMAT(R.string.ra_browser_audio_unsupported_format),
     }
 }
