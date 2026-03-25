@@ -61,6 +61,7 @@ import io.ktor.server.plugins.compression.Compression
 import io.ktor.server.plugins.compression.matchContentType
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.autohead.AutoHeadResponse
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.request.host
 import io.ktor.server.request.httpMethod
@@ -630,6 +631,7 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
                     anyHost()
                 }
                 install(PartialContent)
+                install(AutoHeadResponse)
                 if (BuildConfig.DEBUG) install(CallLogging) {
                     format { call ->
                         val status = call.response.status()
