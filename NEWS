@@ -1,3 +1,8 @@
+Changes between 3.7.1 Beta 1 and 3.7.1 Beta 2:
+------------------
+ * Remote access: allow playing audio media in the browser
+ * Crash and bahavior fixes
+
 Changes between 3.7.0 and 3.7.1 Beta 1:
 ------------------
  * Equalizer fixes
