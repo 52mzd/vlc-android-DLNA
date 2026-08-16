@@ -32,6 +32,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.CheckBoxPreference
+import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
 import org.videolan.medialibrary.interfaces.Medialibrary
@@ -75,7 +76,10 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
             }
         }
         // Show the DLNA device name that other devices will see
-        findPreference<Preference>("dlna_device_name")?.summary = getString(R.string.dmr_device_name, Build.MODEL)
+        findPreference<EditTextPreference>("dlna_receiver_name")?.let {
+            it.summary = it.text?.takeIf { name -> name.isNotBlank() }
+                    ?: getString(R.string.dmr_name_summary)
+        }
     }
 
     override fun onStart() {

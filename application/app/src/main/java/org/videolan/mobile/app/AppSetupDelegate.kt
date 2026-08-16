@@ -51,7 +51,9 @@ import org.videolan.tools.KEY_ENABLE_REMOTE_ACCESS
 import org.videolan.tools.KEY_INCOGNITO
 import org.videolan.tools.KEY_PERSISTENT_INCOGNITO
 import org.videolan.tools.KEY_SET_LOCALE
+import org.videolan.resources.util.launchForeground
 import org.videolan.tools.Settings
+import org.videolan.vlc.dmr.DmrService
 import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.gui.helpers.NotificationHelper
@@ -73,6 +75,11 @@ class AppSetupDelegate : AppDelegate,
     override val appContextProvider = AppContextProvider
 
     @TargetApi(Build.VERSION_CODES.O)
+    private fun startDmrService() {
+        val intent = Intent(appContextProvider.appContext, DmrService::class.java)
+        appContextProvider.appContext.launchForeground(intent)
+    }
+
     override fun Application.setupApplication() {
         appContextProvider.init(this)
         NotificationHelper.createNotificationChannels(this)
@@ -104,9 +111,23 @@ class AppSetupDelegate : AppDelegate,
         if (settings.getBoolean(KEY_ENABLE_REMOTE_ACCESS, false))
             startRemoteAccess()
 
+        // DLNA receiver: auto-start on Android TV when enabled (default on)
+        var dmrStarted = false
+        if (AndroidDevices.isAndroidTv && settings.getBoolean(DmrService.KEY_DLNA_RECEIVER, true)) {
+            startDmrService()
+            dmrStarted = true
+        }
+
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) {
                 AppContextProvider.currentActivity = activity
+                // Retry on first visible activity: cold start on Android 12+ may
+                // block foreground-service start from Application.onCreate
+                if (!dmrStarted && AndroidDevices.isAndroidTv &&
+                        Settings.getInstance(activity).getBoolean(DmrService.KEY_DLNA_RECEIVER, true)) {
+                    dmrStarted = true
+                    startDmrService()
+                }
             }
 
             override fun onActivityPaused(activity: Activity) {

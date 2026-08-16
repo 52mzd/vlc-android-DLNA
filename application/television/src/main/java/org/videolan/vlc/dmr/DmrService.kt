@@ -136,7 +136,7 @@ class DmrService : Service() {
         if (device != null) return
         try {
             val details = DeviceDetails(
-                    getString(R.string.dmr_device_name, Build.MODEL),
+                    getFriendlyName(),
                     ManufacturerDetails("VideoLAN"),
                     ModelDetails("VLC for Android", "DLNA Media Renderer", BuildConfig.VLC_VERSION_NAME),
                     null,
@@ -173,6 +173,14 @@ class DmrService : Service() {
         return service
     }
 
+    /**
+     * Custom device name from settings, falling back to "VLC (<model>)" when empty.
+     */
+    private fun getFriendlyName(): String {
+        val custom = Settings.getInstance(this).getString(KEY_DLNA_NAME, null)?.takeIf { it.isNotBlank() }
+        return custom ?: getString(R.string.dmr_device_name, Build.MODEL)
+    }
+
     private fun getOrCreateUdn(): String {
         val settings = Settings.getInstance(this)
         settings.getString(KEY_DLNA_UDN, null)?.let { return it }
@@ -201,6 +209,7 @@ class DmrService : Service() {
 
     companion object {
         const val KEY_DLNA_RECEIVER = "dlna_receiver"
+        const val KEY_DLNA_NAME = "dlna_receiver_name"
         const val KEY_DLNA_UDN = "dlna_udn"
         private const val NOTIFICATION_ID = 0x4D52 // "MR"
     }

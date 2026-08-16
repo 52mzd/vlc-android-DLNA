@@ -93,7 +93,7 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
         audioResumePref = findPreference(AUDIO_RESUME_PLAYBACK)!!
         // DLNA receiver is a TV-only feature
         findPreference<Preference>("dlna_receiver")?.isVisible = false
-        findPreference<Preference>("dlna_device_name")?.isVisible = false
+        findPreference<Preference>("dlna_receiver_name")?.isVisible = false
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
