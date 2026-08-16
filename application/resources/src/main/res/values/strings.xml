@@ -1445,4 +1445,14 @@
     <string name="feedback_email_warning_try_anyway">Try anyway</string>
     <string name="forum_url" translatable="false">https://forum.videolan.org/viewforum.php?f=35</string>
     <string name="doc_url" translatable="false">https://docs.videolan.me/vlc-user/android/</string>
+    <!-- DLNA receiver (DMR) -->
+    <string name="dmr_device_name">VLC (%1$s)</string>
+    <string name="dmr_enabled_title">DLNA receiver enabled</string>
+    <string name="dmr_enabled_summary">This device can receive media from other DLNA devices</string>
+    <string name="dlna_receiver_title">DLNA receiver</string>
+    <string name="dlna_receiver_summary">Allow other DLNA devices to send media to this device</string>
+    <string name="dmr_status_on">Enabled, ready to receive media from DLNA devices</string>
+    <string name="dmr_status_off">Disabled</string>
+    <string name="dmr_device_name_title">DLNA device name</string>
+    <string name="dmr_start_error">Unable to start DLNA receiver</string>
 </resources>

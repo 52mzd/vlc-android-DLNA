@@ -298,6 +298,15 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
 
     @Volatile
     private var loadingLastPlaylist = false
+
+    /**
+     * Set by the DLNA renderer (DmrBridge) before loading a pushed URL so that
+     * the very next [playIndex] always starts from the beginning, ignoring any
+     * resume position (savedTime may be written asynchronously by a concurrently
+     * restored playlist). Consumed and reset on the next playIndex.
+     */
+    @Volatile
+    var forceStartFromBeginning = false
     fun loadLastPlaylist(type: Int = PLAYLIST_TYPE_AUDIO) : Boolean {
         if (loadingLastPlaylist) return true
         loadingLastPlaylist = true
@@ -524,7 +533,11 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
             if (title > 0) uri = "$uri#$title".toUri()
 
             val start: Long
-            if (isVideoPlaying) {
+            if (forceStartFromBeginning) {
+                forceStartFromBeginning = false
+                savedTime = 0L
+                start = 0L
+            } else if (isVideoPlaying) {
                 start = if (forceRestart
                     || videoResumeStatus == ResumeStatus.NEVER) 0L else getStartTime(mw)
                 // If we explicitly restart or NEVER resume is set, ensure any leftover savedTime is cleared

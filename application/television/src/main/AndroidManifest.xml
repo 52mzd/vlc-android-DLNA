@@ -94,5 +94,14 @@
                 android:pathPrefix="/search"
                 android:readPermission="android.permission.GLOBAL_SEARCH" />
         </provider>
+
+        <!-- DLNA renderer (DMR): jUPnP protocol stack + media renderer foreground service -->
+        <service
+            android:name="org.jupnp.android.AndroidUpnpServiceImpl"
+            android:exported="false" />
+        <service
+            android:name="org.videolan.vlc.dmr.DmrService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>

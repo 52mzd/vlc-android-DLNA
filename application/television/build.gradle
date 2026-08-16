@@ -46,4 +46,18 @@ dependencies {
     testImplementation "androidx.test:core:$rootProject.ext.testCore"
     androidTestImplementation "androidx.test.ext:junit:$rootProject.ext.junitExtVersion"
     implementation 'com.jaredrummler:colorpicker:1.1.0'
+    testImplementation "junit:junit:$rootProject.ext.junitVersion"
+
+    // DLNA renderer (DMR): jUPnP + Jetty 9.2 transport (kept out of vlc-android to avoid kapt stub issues)
+    // Jetty 9.2 keeps Java 7 bytecode so D8 can dex it for minSdk 21 (9.4 requires min-api 26)
+    implementation 'org.jupnp:org.jupnp:3.0.5'
+    implementation 'org.jupnp:org.jupnp.android:3.0.5'
+    implementation('org.eclipse.jetty:jetty-server:9.2.30.v20200428') { exclude group: 'org.eclipse.jetty.orbit' }
+    implementation('org.eclipse.jetty:jetty-servlet:9.2.30.v20200428') { exclude group: 'org.eclipse.jetty.orbit' }
+    implementation('org.eclipse.jetty:jetty-client:9.2.30.v20200428') { exclude group: 'org.eclipse.jetty.orbit' }
+    implementation('org.eclipse.jetty:jetty-util:9.2.30.v20200428') { exclude group: 'org.eclipse.jetty.orbit' }
+    implementation('org.eclipse.jetty:jetty-http:9.2.30.v20200428') { exclude group: 'org.eclipse.jetty.orbit' }
+    implementation('org.eclipse.jetty:jetty-io:9.2.30.v20200428') { exclude group: 'org.eclipse.jetty.orbit' }
+    implementation 'javax.servlet:javax.servlet-api:3.1.0'
+    debugImplementation "org.slf4j:slf4j-android:1.7.36"
 }

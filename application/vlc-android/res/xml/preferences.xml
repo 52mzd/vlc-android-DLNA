@@ -49,6 +49,16 @@
                 android:key="metered_connection"
                 android:summary="%s"
                 android:title="@string/metered_connection"/>
+        <SwitchPreferenceCompat
+                android:defaultValue="false"
+                android:key="dlna_receiver"
+                android:summaryOff="@string/dmr_status_off"
+                android:summaryOn="@string/dmr_status_on"
+                android:title="@string/dlna_receiver_title"/>
+        <Preference
+                android:key="dlna_device_name"
+                android:selectable="false"
+                android:title="@string/dmr_device_name_title"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/permissions"
             android:key="permissions_title">

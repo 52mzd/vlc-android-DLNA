@@ -1404,4 +1404,14 @@
     <string name="feedback_email_warning_explanation">分享反馈的最简单方式是使用 %1$s 功能。为此，请在设置中启用远程访问，按照说明操作，然后在菜单中选择 %2$s 选项。</string>
     <string name="feedback_email_warning_remote_action">打开设置</string>
     <string name="feedback_email_warning_try_anyway">仍然尝试</string>
+    <!-- DLNA receiver (DMR) -->
+    <string name="dmr_device_name">VLC (%1$s)</string>
+    <string name="dmr_enabled_title">已启用 DLNA 接收器</string>
+    <string name="dmr_enabled_summary">本设备可从其他 DLNA 设备接收媒体</string>
+    <string name="dlna_receiver_title">DLNA 接收器</string>
+    <string name="dlna_receiver_summary">允许其他 DLNA 设备向本设备推送媒体</string>
+    <string name="dmr_status_on">已开启，可接收其他 DLNA 设备推送的媒体</string>
+    <string name="dmr_status_off">已关闭</string>
+    <string name="dmr_device_name_title">DLNA 设备名称</string>
+    <string name="dmr_start_error">无法启动 DLNA 接收器</string>
     </resources>

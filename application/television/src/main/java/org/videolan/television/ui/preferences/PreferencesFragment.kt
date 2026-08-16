@@ -51,6 +51,7 @@ import org.videolan.tools.Settings
 import org.videolan.tools.Settings.isPinCodeSet
 import org.videolan.tools.VIDEO_RESUME_PLAYBACK
 import org.videolan.vlc.R
+import org.videolan.vlc.dmr.DmrService
 import org.videolan.vlc.gui.EqualizerSettingsActivity
 import org.videolan.vlc.gui.PinCodeActivity
 import org.videolan.vlc.gui.PinCodeReason
@@ -73,6 +74,8 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 (activity as? PreferencesActivity)?.extraEndPoint = null
             }
         }
+        // Show the DLNA device name that other devices will see
+        findPreference<Preference>("dlna_device_name")?.summary = getString(R.string.dmr_device_name, Build.MODEL)
     }
 
     override fun onStart() {
@@ -172,6 +175,21 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 if (sharedPreferences!!.getBoolean(key, true)) {
                     findPreference<CheckBoxPreference>(AUDIO_RESUME_PLAYBACK)?.isChecked = true
                     findPreference<CheckBoxPreference>(VIDEO_RESUME_PLAYBACK)?.isChecked = true
+                }
+            }
+            DmrService.KEY_DLNA_RECEIVER -> {
+                val enabled = sharedPreferences?.getBoolean(key, false) == true
+                val ctx = activity ?: return
+                val intent = Intent(ctx, DmrService::class.java)
+                try {
+                    if (enabled) {
+                        ctx.startForegroundService(intent)
+                    } else {
+                        ctx.stopService(intent)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("VLC/DMR", "Failed to start/stop DmrService", e)
+                    Toast.makeText(ctx, R.string.dmr_start_error, Toast.LENGTH_SHORT).show()
                 }
             }
         }

@@ -12,7 +12,7 @@ plugins {
 def vlcMajorVersion = hasProperty('forceVlc4') && getProperty('forceVlc4') ? 4 : 3
 
 android {
-    minSdk = vlcMajorVersion == 3 ? 17 : 23
+    minSdk = 21 // DLNA renderer (jUPnP) requires minSdk 21; dropped Android 4.2-5.0 support
     targetSdk = 36
     compileSdk = 36 // Dockers: 3.0=36 / 4.0=36
     buildToolsVersion = '36.0.0'
