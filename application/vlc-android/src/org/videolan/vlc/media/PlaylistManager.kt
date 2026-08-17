@@ -48,6 +48,7 @@ import org.videolan.tools.HTTP_USER_AGENT
 import org.videolan.tools.KEY_ALWAYS_FAST_SEEK
 import org.videolan.tools.KEY_AUDIO_CONFIRM_RESUME
 import org.videolan.tools.KEY_AUDIO_FORCE_SHUFFLE
+import org.videolan.tools.KEY_AUDIO_PREFERRED_LANGUAGE
 import org.videolan.tools.KEY_AUDIO_LAST_PLAYLIST
 import org.videolan.tools.KEY_CURRENT_AUDIO
 import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_ARTIST
@@ -66,6 +67,7 @@ import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL_VALUE
 import org.videolan.tools.KEY_PLAYBACK_SPEED_VIDEO_GLOBAL
 import org.videolan.tools.KEY_PLAYBACK_SPEED_VIDEO_GLOBAL_VALUE
 import org.videolan.tools.KEY_SAVE_INDIVIDUAL_AUDIO_DELAY
+import org.videolan.tools.KEY_SUBTITLE_PREFERRED_LANGUAGE
 import org.videolan.tools.KEY_VIDEO_APP_SWITCH
 import org.videolan.tools.KEY_VIDEO_CONFIRM_RESUME
 import org.videolan.tools.MEDIA_SHUFFLING
@@ -86,9 +88,12 @@ import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.R
+import org.videolan.vlc.getAllTracks
 import org.videolan.vlc.gui.browser.BaseBrowserFragment
 import org.videolan.vlc.gui.video.VideoPlayerActivity
 import org.videolan.vlc.util.FileUtils
+import org.videolan.vlc.util.LocaleUtil
+import org.videolan.vlc.util.LocaleUtil.localeEquivalent
 import org.videolan.vlc.util.awaitMedialibraryStarted
 import org.videolan.vlc.util.isSchemeFD
 import org.videolan.vlc.util.isSchemeHttpOrHttps
@@ -156,6 +161,8 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     var savedTime = 0L
     private var random = SecureRandom()
     private var newMedia = false
+    /** Guards the one-shot spu track application on the first Vout event */
+    private var spuApplyPending = true
     @Volatile
     private var expanding = false
     private var entryUrl : String? = null
@@ -747,6 +754,88 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         if (media.id != 0L) launch(Dispatchers.IO) { media.setStringMeta(MediaWrapper.META_SUBTITLE_TRACK, index) }
     }
 
+    /**
+     * Apply the audio track saved for the current media, or match the
+     * preferred audio language when nothing was saved.
+     *
+     * Runs in the service layer so that UI-less playback scenarios
+     * (renderers, casting, background playback) get the same behavior
+     * as the video UI. As in the previous UI implementation, the selection
+     * is not persisted here: only an explicit user selection is.
+     */
+    private suspend fun applyPreferredAudioTrack() {
+        val mw = getCurrentMedia() ?: return
+        val media = medialibrary.findMedia(mw)
+        var preferredTrack = "0"
+        val preferredAudioLang = settings.getString(KEY_AUDIO_PREFERRED_LANGUAGE, "")
+        if (!preferredAudioLang.isNullOrEmpty()) {
+            /** ⚠️limitation: See [LocaleUtil] header comment */
+            val allTracks = player.mediaplayer.media?.getAllTracks()
+            player.getAudioTracks()?.iterator()?.let { audioTracks ->
+                while (audioTracks.hasNext()) {
+                    val next = audioTracks.next()
+                    val realTrack = allTracks?.find { it.id.toString() == next.getId() }
+                    if (LocaleUtil.getLocaleFromVLC(realTrack?.language
+                                    ?: "") == preferredAudioLang) {
+                        preferredTrack = next.getId()
+                        break
+                    }
+                }
+            }
+        }
+        val audioTrack = when (val savedTrack = media.getMetaString(MediaWrapper.META_AUDIOTRACK) ?: "0") {
+            "0" -> preferredTrack
+            else -> savedTrack
+        }
+        if (audioTrack != "0" || player.getAudioTrack() != "-1")
+            player.setAudioTrack(audioTrack)
+    }
+
+    /**
+     * Apply the subtitle track saved for the current media, or match the
+     * preferred subtitle language when nothing was saved.
+     *
+     * Called once the video output exists (first [MediaPlayer.Event.Vout]).
+     * Selecting an spu ES before the vout is created can leave the track
+     * flagged as selected without a running decoder (e.g. when the freetype
+     * font database build delays the vout); re-selecting through "0" forces
+     * es_out to (re)start the ES decoder.
+     *
+     * The selection is persisted via [setSpuTrack], matching the previous
+     * UI implementation.
+     */
+    private suspend fun applyPreferredSpuTrack() {
+        val mw = getCurrentMedia() ?: return
+        val media = medialibrary.findMedia(mw)
+        var preferredTrack = "0"
+        val preferredSpuLang = settings.getString(KEY_SUBTITLE_PREFERRED_LANGUAGE, "")
+        if (!preferredSpuLang.isNullOrEmpty()) {
+            val allTracks = player.mediaplayer.media?.getAllTracks()
+            player.getSpuTracks()?.iterator()?.let { spuTracks ->
+                while (spuTracks.hasNext()) {
+                    val next = spuTracks.next()
+                    val realTrack = allTracks?.find { it.id.toString() == next.getId() }
+                    if (LocaleUtil.getLocaleFromVLC(realTrack?.language
+                                    ?: "") in preferredSpuLang.localeEquivalent()) {
+                        preferredTrack = next.getId()
+                        break
+                    }
+                }
+            }
+        }
+        val spuTrack = when (val savedTrack = media.getMetaString(MediaWrapper.META_SUBTITLE_TRACK) ?: "0") {
+            "0" -> preferredTrack
+            else -> savedTrack
+        }
+        if (spuTrack != "0") {
+            // Re-select through "0" to force es_out to (re)start the ES decoder.
+            // Bypass [setSpuTrack] for the reset: it would persist "0" (disabled)
+            // into the media meta and could win the race against the final write.
+            player.setSpuTrack("0")
+            setSpuTrack(spuTrack)
+        }
+    }
+
     fun setAudioDelay(delay: Long) {
         if (!player.setAudioDelay(delay)) return
         val media = getCurrentMedia() ?: return
@@ -762,6 +851,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     }
 
     private fun loadMediaMeta(media: MediaWrapper) {
+        spuApplyPending = true
         if (player.canSwitchToVideo()) {
             val savedDelay = media.getMetaLong(MediaWrapper.META_AUDIODELAY)
             val globalDelay = Settings.getInstance(AppContextProvider.appContext).getLong(AUDIO_DELAY_GLOBAL, 0L)
@@ -1291,6 +1381,17 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
                         getCurrentMedia()?.let { media ->
                             restoreSpeed(media)
                         }
+                }
+                MediaPlayer.Event.ESAdded -> when (event.esChangedType) {
+                    IMedia.Track.Type.Audio -> withContext(Dispatchers.IO) { applyPreferredAudioTrack() }
+                    // Subtitle selection is deferred to the first Vout event: selecting
+                    // an spu ES before the video output is ready can register the track
+                    // as selected without ever starting its decoder (observed when the
+                    // freetype font database build delays the vout creation).
+                }
+                MediaPlayer.Event.Vout -> if (event.voutCount > 0 && spuApplyPending) {
+                    spuApplyPending = false
+                    withContext(Dispatchers.IO) { applyPreferredSpuTrack() }
                 }
                 MediaPlayer.Event.ESSelected -> {
                     getCurrentMedia()?.let { media ->
