@@ -29,6 +29,7 @@ import org.videolan.libvlc.Dialog
 import org.videolan.tools.BitmapCache
 import org.videolan.vlc.ArtworkProvider
 import org.videolan.vlc.util.DialogDelegate
+import org.videolan.vlc.util.FontPrewarmer
 
 private const val TAG = "VLC/VLCApplication"
 
@@ -42,6 +43,7 @@ class VLCApplication : MultiDexApplication(), Dialog.Callbacks by DialogDelegate
     override fun onCreate() {
         setupApplication()
         super.onCreate()
+        FontPrewarmer.maybePrewarm(this)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
