@@ -24,10 +24,12 @@
 package org.videolan.vlc.gui.preferences
 
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
@@ -62,6 +64,7 @@ import org.videolan.vlc.gui.dialogs.ConfirmPreferenceChangeDialog
 import org.videolan.vlc.gui.dialogs.PREFERENCE_KEY
 import org.videolan.vlc.gui.dialogs.PermissionListDialog
 import org.videolan.vlc.gui.helpers.UiTools
+import org.videolan.vlc.gui.helpers.UiTools.isTablet
 import org.videolan.vlc.gui.preferences.search.PreferenceItem
 import org.videolan.vlc.util.Permissions
 
@@ -91,9 +94,11 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         audioResumePref = findPreference(AUDIO_RESUME_PLAYBACK)!!
-        // DLNA receiver is a TV-only feature
-        findPreference<Preference>("dlna_receiver")?.isVisible = false
-        findPreference<Preference>("dlna_receiver_name")?.isVisible = false
+        // DLNA receiver is hidden on phones; shown on tablets (and TV, via the TV UI)
+        if (!requireContext().isTablet()) {
+            findPreference<Preference>("dlna_receiver")?.isVisible = false
+            findPreference<Preference>("dlna_receiver_name")?.isVisible = false
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -230,6 +235,24 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 if (sharedPreferences.getBoolean(key, true)) {
                     findPreference<CheckBoxPreference>(AUDIO_RESUME_PLAYBACK)?.isChecked = true
                     findPreference<CheckBoxPreference>(VIDEO_RESUME_PLAYBACK)?.isChecked = true
+                }
+            }
+            // DmrService lives in the television module (see DmrService.KEY_DLNA_RECEIVER);
+            // referenced by class name to avoid a dependency from this module to television.
+            "dlna_receiver" -> {
+                val enabled = sharedPreferences.getBoolean(key, false)
+                val intent = Intent().apply {
+                    component = ComponentName(activity, "org.videolan.vlc.dmr.DmrService")
+                }
+                try {
+                    if (enabled) {
+                        activity.startForegroundService(intent)
+                    } else {
+                        activity.stopService(intent)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("VLC/DMR", "Failed to start/stop DmrService", e)
+                    Toast.makeText(activity, R.string.dmr_start_error, Toast.LENGTH_SHORT).show()
                 }
             }
         }
