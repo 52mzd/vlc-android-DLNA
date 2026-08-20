@@ -98,6 +98,7 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
         if (!requireContext().isTablet()) {
             findPreference<Preference>("dlna_receiver")?.isVisible = false
             findPreference<Preference>("dlna_receiver_name")?.isVisible = false
+            findPreference<Preference>("dlna_background_receive")?.isVisible = false
         }
     }
 
@@ -237,8 +238,9 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                     findPreference<CheckBoxPreference>(VIDEO_RESUME_PLAYBACK)?.isChecked = true
                 }
             }
-            // DmrService lives in the television module (see DmrService.KEY_DLNA_RECEIVER);
-            // referenced by class name to avoid a dependency from this module to television.
+            // DmrService and DmrReceiverActivity live in the television module (see
+            // DmrService.KEY_DLNA_RECEIVER); referenced by class name to avoid a dependency
+            // from this module to television.
             "dlna_receiver" -> {
                 val enabled = sharedPreferences.getBoolean(key, false)
                 val intent = Intent().apply {
@@ -253,6 +255,26 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 } catch (e: Exception) {
                     android.util.Log.w("VLC/DMR", "Failed to start/stop DmrService", e)
                     Toast.makeText(activity, R.string.dmr_start_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+            // 后台接收 mode: keep the resident receiver window in sync with the switch,
+            // without toggling the DmrService itself. The stop signal is a broadcast
+            // (matched by DmrService.ACTION_RECEIVER_STOP) because the receiver window is
+            // an Activity, not a Service.
+            "dlna_background_receive" -> {
+                val dmrOn = sharedPreferences.getBoolean("dlna_receiver", false)
+                val backgroundReceive = sharedPreferences.getBoolean(key, false)
+                if (dmrOn) {
+                    if (backgroundReceive) {
+                        val win = Intent().apply {
+                            component = ComponentName(activity, "org.videolan.television.ui.DmrReceiverActivity")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        }
+                        activity.startActivity(win)
+                    } else {
+                        // Matches DmrService.ACTION_RECEIVER_STOP (defined in the television module)
+                        activity.sendBroadcast(Intent("org.videolan.vlc.dmr.RECEIVER_STOP").setPackage(activity.packageName))
+                    }
                 }
             }
         }

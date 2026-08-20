@@ -95,6 +95,12 @@
                 android:readPermission="android.permission.GLOBAL_SEARCH" />
         </provider>
 
+        <!-- Resident receiver window for the 后台接收 DLNA mode -->
+        <activity
+            android:name="org.videolan.television.ui.DmrReceiverActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.VLC.Black" />
+
         <!-- DLNA renderer (DMR): jUPnP protocol stack + media renderer foreground service -->
         <service
             android:name="org.jupnp.android.AndroidUpnpServiceImpl"
