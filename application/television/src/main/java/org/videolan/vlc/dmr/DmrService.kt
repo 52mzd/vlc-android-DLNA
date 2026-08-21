@@ -51,7 +51,7 @@ import org.jupnp.model.types.DLNADoc
 import org.jupnp.model.types.UDADeviceType
 import org.jupnp.model.types.UDN
 import org.videolan.resources.AppContextProvider
-import org.videolan.television.ui.DmrReceiverActivity
+import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.tools.Settings
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.PlaybackService
@@ -151,7 +151,7 @@ class DmrService : Service() {
         // surface. Kept in onStartCommand (not onCreate) so a START_STICKY restart
         // re-establishes the resumed window.
         if (Settings.getInstance(this).getBoolean(KEY_DLNA_BACKGROUND_RECEIVE, false)) {
-            DmrReceiverActivity.start(this)
+            DmrReceiverWindow.start(this)
         }
         return START_STICKY
     }
@@ -294,8 +294,10 @@ class DmrService : Service() {
         const val KEY_DLNA_UDN = "dlna_udn"
         const val KEY_DLNA_BACKGROUND_RECEIVE = "dlna_background_receive"
 
-        /** Broadcast action signalling the resident receiver window to finish. */
-        const val ACTION_RECEIVER_STOP = "org.videolan.vlc.dmr.RECEIVER_STOP"
+        /** Broadcast action signalling the resident receiver window to finish.
+         *  Single source is DmrReceiverWindow.ACTION_RECEIVER_STOP (kept here so callers
+         *  can reference DmrService.ACTION_RECEIVER_STOP without a resources import). */
+        const val ACTION_RECEIVER_STOP = DmrReceiverWindow.ACTION_RECEIVER_STOP
         private const val NOTIFICATION_ID = 0x4D52 // "MR"
     }
 }

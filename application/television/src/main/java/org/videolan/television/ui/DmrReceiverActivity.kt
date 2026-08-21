@@ -34,7 +34,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.interfaces.IMedia
-import org.videolan.resources.AppContextProvider
+import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.television.R
 import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.dmr.DmrService
@@ -142,24 +142,10 @@ class DmrReceiverActivity : AppCompatActivity(), PlaybackService.Callback {
     }
 
     companion object {
-        // Broadcast action owned by DmrService (ACTION_RECEIVER_STOP); used here to stop
-        // this window. No duplicate constant — reference the single source of truth.
-        //
-        // force=false (default) applies no-hijack precedence: only assert resumed when no
-        // other VLC activity is in the foreground, so the window never yanks an active
-        // playback away. This is the path used by DmrService.onStartCommand (automatic
-        // launches). force=true skips that check for user-initiated launches (flipping the
-        // 后台接收 switch in settings), where the user explicitly asked for the window.
-        fun start(context: Context, force: Boolean = false) {
-            if (!force && AppContextProvider.currentActivity != null) return
-            val intent = Intent(context, DmrReceiverActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-            context.startActivity(intent)
-        }
+        // Delegate to the cross-module helper (single source of truth for the launch
+        // flags + no-hijack guard + stop action). See DmrReceiverWindow for the contract.
+        fun start(context: Context, force: Boolean = false) = DmrReceiverWindow.start(context, force)
 
-        fun stop(context: Context) {
-            context.sendBroadcast(Intent(DmrService.ACTION_RECEIVER_STOP).setPackage(context.packageName))
-        }
+        fun stop(context: Context) = DmrReceiverWindow.stop(context)
     }
 }

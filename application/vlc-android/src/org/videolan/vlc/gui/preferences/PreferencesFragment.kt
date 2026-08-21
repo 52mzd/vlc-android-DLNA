@@ -38,6 +38,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.interfaces.Medialibrary
+import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.resources.util.parcelable
 import org.videolan.tools.AUDIO_RESUME_PLAYBACK
 import org.videolan.tools.KEY_AUDIO_LAST_PLAYLIST
@@ -258,23 +259,16 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 }
             }
             // 后台接收 mode: keep the resident receiver window in sync with the switch,
-            // without toggling the DmrService itself. The stop signal is a broadcast
-            // (matched by DmrService.ACTION_RECEIVER_STOP) because the receiver window is
-            // an Activity, not a Service.
+            // without toggling the DmrService itself. The window lives in the television
+            // module; DmrReceiverWindow (resources) bridges the cross-module start/stop.
             "dlna_background_receive" -> {
                 val dmrOn = sharedPreferences.getBoolean("dlna_receiver", false)
                 val backgroundReceive = sharedPreferences.getBoolean(key, false)
                 if (dmrOn) {
-                    if (backgroundReceive) {
-                        val win = Intent().apply {
-                            component = ComponentName(activity, "org.videolan.television.ui.DmrReceiverActivity")
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        }
-                        activity.startActivity(win)
-                    } else {
-                        // Matches DmrService.ACTION_RECEIVER_STOP (defined in the television module)
-                        activity.sendBroadcast(Intent("org.videolan.vlc.dmr.RECEIVER_STOP").setPackage(activity.packageName))
-                    }
+                    // User-initiated: force the resident window up even while settings is
+                    // in the foreground — the user just asked to enter receiver mode.
+                    if (backgroundReceive) DmrReceiverWindow.start(activity, force = true)
+                    else DmrReceiverWindow.stop(activity)
                 }
             }
         }

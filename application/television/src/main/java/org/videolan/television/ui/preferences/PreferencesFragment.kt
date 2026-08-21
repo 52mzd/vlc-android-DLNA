@@ -51,6 +51,7 @@ import org.videolan.tools.RESULT_RESTART
 import org.videolan.tools.Settings
 import org.videolan.tools.Settings.isPinCodeSet
 import org.videolan.tools.VIDEO_RESUME_PLAYBACK
+import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.vlc.R
 import org.videolan.vlc.dmr.DmrService
 import org.videolan.vlc.gui.EqualizerSettingsActivity
@@ -59,7 +60,6 @@ import org.videolan.vlc.gui.PinCodeReason
 import org.videolan.vlc.gui.SecondaryActivity
 import org.videolan.vlc.gui.dialogs.ConfirmPreferenceChangeDialog
 import org.videolan.vlc.gui.dialogs.PermissionListDialog
-import org.videolan.television.ui.DmrReceiverActivity
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnSharedPreferenceChangeListener {
@@ -206,7 +206,7 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 if (dmrOn) {
                     // User-initiated: force the resident window up even while settings is
                     // in the foreground — the user just asked to enter receiver mode.
-                    if (backgroundReceive) DmrReceiverActivity.start(ctx, force = true) else DmrReceiverActivity.stop(ctx)
+                    if (backgroundReceive) DmrReceiverWindow.start(ctx, force = true) else DmrReceiverWindow.stop(ctx)
                 }
             }
         }
