@@ -38,7 +38,6 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.interfaces.Medialibrary
-import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.resources.util.parcelable
 import org.videolan.tools.AUDIO_RESUME_PLAYBACK
 import org.videolan.tools.KEY_AUDIO_LAST_PLAYLIST
@@ -99,7 +98,6 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
         if (!requireContext().isTablet()) {
             findPreference<Preference>("dlna_receiver")?.isVisible = false
             findPreference<Preference>("dlna_receiver_name")?.isVisible = false
-            findPreference<Preference>("dlna_background_receive")?.isVisible = false
         }
     }
 
@@ -239,9 +237,8 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                     findPreference<CheckBoxPreference>(VIDEO_RESUME_PLAYBACK)?.isChecked = true
                 }
             }
-            // DmrService and DmrReceiverActivity live in the television module (see
-            // DmrService.KEY_DLNA_RECEIVER); referenced by class name to avoid a dependency
-            // from this module to television.
+            // DmrService lives in the television module (see DmrService.KEY_DLNA_RECEIVER);
+            // referenced by class name to avoid a dependency from this module to television.
             "dlna_receiver" -> {
                 val enabled = sharedPreferences.getBoolean(key, false)
                 val intent = Intent().apply {
@@ -256,19 +253,6 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 } catch (e: Exception) {
                     android.util.Log.w("VLC/DMR", "Failed to start/stop DmrService", e)
                     Toast.makeText(activity, R.string.dmr_start_error, Toast.LENGTH_SHORT).show()
-                }
-            }
-            // 后台接收 mode: keep the resident receiver window in sync with the switch,
-            // without toggling the DmrService itself. The window lives in the television
-            // module; DmrReceiverWindow (resources) bridges the cross-module start/stop.
-            "dlna_background_receive" -> {
-                val dmrOn = sharedPreferences.getBoolean("dlna_receiver", false)
-                val backgroundReceive = sharedPreferences.getBoolean(key, false)
-                if (dmrOn) {
-                    // User-initiated: force the resident window up even while settings is
-                    // in the foreground — the user just asked to enter receiver mode.
-                    if (backgroundReceive) DmrReceiverWindow.start(activity, force = true)
-                    else DmrReceiverWindow.stop(activity)
                 }
             }
         }

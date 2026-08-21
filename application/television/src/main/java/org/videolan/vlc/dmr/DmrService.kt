@@ -51,7 +51,6 @@ import org.jupnp.model.types.DLNADoc
 import org.jupnp.model.types.UDADeviceType
 import org.jupnp.model.types.UDN
 import org.videolan.resources.AppContextProvider
-import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.tools.Settings
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.PlaybackService
@@ -78,26 +77,22 @@ class DmrService : Service() {
     private var device: LocalDevice? = null
     private var upnpBound = false
 
-    // 跟随前台 mode (dlna_background_receive=OFF): track how many VLC activities are
-    // resumed so the renderer only receives while VLC is in the foreground. In this mode
-    // the device is only registered while resumedCount>0, so a swiped/Home'd VLC stops
-    // receiving (no "no window + receiving" state, hence no BAL exposure). In 后台接收
-    // mode (ON) this tracking is ignored — the device stays registered and the resident
-    // receiver window keeps a surface resumed.
+    // Track how many VLC activities are resumed so the renderer only receives while VLC
+    // is in the foreground. The device is only registered while resumedCount>0, so a
+    // swiped/Home'd VLC stops receiving (no "no window + receiving" state, hence no BAL
+    // exposure).
     private var resumedCount = 0
     private var lifecycleRegistered = false
 
     private val lifecycleCallbacks = object : ActivityLifecycleCallbacks {
         override fun onActivityResumed(activity: Activity) {
             resumedCount++
-            // 后台接收 keeps the device registered regardless of foreground; only
-            // re-evaluate in 跟随前台 mode.
-            if (followsForeground()) registerDeviceIfForeground()
+            registerDeviceIfForeground()
         }
 
         override fun onActivityPaused(activity: Activity) {
             resumedCount--
-            if (followsForeground() && resumedCount <= 0) unregisterDevice()
+            if (resumedCount <= 0) unregisterDevice()
         }
 
         override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
@@ -147,12 +142,6 @@ class DmrService : Service() {
         } catch (e: Exception) {
             Log.w(tag, "Failed to start PlaybackService", e)
         }
-        // 后台接收 mode: keep a resident receiver window resumed so a push always has a
-        // surface. Kept in onStartCommand (not onCreate) so a START_STICKY restart
-        // re-establishes the resumed window.
-        if (Settings.getInstance(this).getBoolean(KEY_DLNA_BACKGROUND_RECEIVE, false)) {
-            DmrReceiverWindow.start(this)
-        }
         return START_STICKY
     }
 
@@ -165,8 +154,6 @@ class DmrService : Service() {
         }
         unregisterDevice()
         upnpService = null
-        // Signal the resident receiver window to finish when DMR is switched off.
-        sendBroadcast(Intent(ACTION_RECEIVER_STOP).setPackage(packageName))
         if (upnpBound) {
             upnpBound = false
             try {
@@ -191,13 +178,9 @@ class DmrService : Service() {
      *  device must be skipped while no VLC activity is resumed (else it would accept
      *  pushes with no window — the exact BAL bug this feature fixes). */
     private fun registerDeviceIfForeground() {
-        if (followsForeground() && resumedCount <= 0) return
+        if (resumedCount <= 0) return
         registerDevice()
     }
-
-    /** 跟随前台 mode = the 后台接收 switch is OFF. In that mode the renderer follows
-     *  VLC's foreground state. In 后台接收 mode it stays registered regardless. */
-    private fun followsForeground() = !Settings.getInstance(this).getBoolean(KEY_DLNA_BACKGROUND_RECEIVE, false)
 
     private fun unregisterDevice() {
         val service = upnpService ?: run { device = null; return }
@@ -292,12 +275,6 @@ class DmrService : Service() {
         const val KEY_DLNA_RECEIVER = "dlna_receiver"
         const val KEY_DLNA_NAME = "dlna_receiver_name"
         const val KEY_DLNA_UDN = "dlna_udn"
-        const val KEY_DLNA_BACKGROUND_RECEIVE = "dlna_background_receive"
-
-        /** Broadcast action signalling the resident receiver window to finish.
-         *  Single source is DmrReceiverWindow.ACTION_RECEIVER_STOP (kept here so callers
-         *  can reference DmrService.ACTION_RECEIVER_STOP without a resources import). */
-        const val ACTION_RECEIVER_STOP = DmrReceiverWindow.ACTION_RECEIVER_STOP
         private const val NOTIFICATION_ID = 0x4D52 // "MR"
     }
 }

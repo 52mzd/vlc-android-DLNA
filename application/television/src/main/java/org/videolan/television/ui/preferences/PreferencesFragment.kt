@@ -51,7 +51,6 @@ import org.videolan.tools.RESULT_RESTART
 import org.videolan.tools.Settings
 import org.videolan.tools.Settings.isPinCodeSet
 import org.videolan.tools.VIDEO_RESUME_PLAYBACK
-import org.videolan.resources.util.DmrReceiverWindow
 import org.videolan.vlc.R
 import org.videolan.vlc.dmr.DmrService
 import org.videolan.vlc.gui.EqualizerSettingsActivity
@@ -195,18 +194,6 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 } catch (e: Exception) {
                     android.util.Log.w("VLC/DMR", "Failed to start/stop DmrService", e)
                     Toast.makeText(ctx, R.string.dmr_start_error, Toast.LENGTH_SHORT).show()
-                }
-            }
-            DmrService.KEY_DLNA_BACKGROUND_RECEIVE -> {
-                // 后台接收 mode: keep the resident receiver window in sync with the
-                // switch, without toggling the DmrService itself.
-                val ctx = activity ?: return
-                val dmrOn = sharedPreferences?.getBoolean(DmrService.KEY_DLNA_RECEIVER, false) == true
-                val backgroundReceive = sharedPreferences?.getBoolean(key, false) == true
-                if (dmrOn) {
-                    // User-initiated: force the resident window up even while settings is
-                    // in the foreground — the user just asked to enter receiver mode.
-                    if (backgroundReceive) DmrReceiverWindow.start(ctx, force = true) else DmrReceiverWindow.stop(ctx)
                 }
             }
         }

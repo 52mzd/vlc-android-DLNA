@@ -1416,7 +1416,4 @@
     <string name="dmr_name_dialog_title">输入设备名称</string>
     <string name="dmr_name_summary">其他 DLNA 设备看到的名称（留空则用默认 "VLC (型号)"）</string>
     <string name="dmr_start_error">无法启动 DLNA 接收器</string>
-    <string name="dlna_background_receive_title">允许后台接收</string>
-    <string name="dlna_background_receive_summary">VLC 在后台时仍接收 DLNA 投屏</string>
-    <string name="dmr_receiver_window_title">DLNA 接收器</string>
     </resources>

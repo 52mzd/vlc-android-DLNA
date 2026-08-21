@@ -1457,7 +1457,4 @@
     <string name="dmr_name_dialog_title">Enter a device name</string>
     <string name="dmr_name_summary">Custom name shown to other DLNA devices (empty = default "VLC (model)")</string>
     <string name="dmr_start_error">Unable to start DLNA receiver</string>
-    <string name="dlna_background_receive_title">Allow background receive</string>
-    <string name="dlna_background_receive_summary">Keep receiving DLNA pushes when VLC is in the background</string>
-    <string name="dmr_receiver_window_title">DLNA receiver</string>
 </resources>
