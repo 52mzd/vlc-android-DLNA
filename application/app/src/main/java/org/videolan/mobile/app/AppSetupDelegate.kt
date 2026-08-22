@@ -45,6 +45,7 @@ import org.videolan.mobile.app.delegates.MediaContentDelegate
 import org.videolan.resources.AndroidDevices
 import org.videolan.resources.AppContextProvider
 import org.videolan.resources.VLCInstance
+import org.videolan.resources.util.launchForeground
 import org.videolan.resources.util.startRemoteAccess
 import org.videolan.tools.AppScope
 import org.videolan.tools.KEY_ENABLE_REMOTE_ACCESS
@@ -103,6 +104,11 @@ class AppSetupDelegate : AppDelegate,
         backgroundInit()
         if (settings.getBoolean(KEY_ENABLE_REMOTE_ACCESS, false))
             startRemoteAccess()
+        // DLNA receiver: follow the switch on app start (opt-in, no boot autostart).
+        // DmrService lives in the television module; referenced by class name to avoid
+        // a dependency from this module to television (same pattern as PreferencesFragment).
+        if (settings.getBoolean("dlna_receiver", false))
+            launchForeground(Intent().setClassName(this, "org.videolan.vlc.dmr.DmrService"))
 
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) {
