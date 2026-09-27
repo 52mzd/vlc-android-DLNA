@@ -30,10 +30,15 @@ jobs:
       - name: Decode keystore
         run: echo "${{ secrets.VLC_FORK_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/vlc-fork-release.p12"
 
-      # JVM-only build: libvlcjni/libvlc is cloned only for native builds but is
-      # unconditionally included by settings.gradle; an empty dir passes config.
-      - name: Prepare JVM-only build dirs
-        run: mkdir -p libvlcjni/libvlc
+      # JVM-only build prep:
+      # - libvlcjni/libvlc is cloned only for native builds but is unconditionally
+      #   included by settings.gradle; an empty dir passes project configuration.
+      # - build.gradle unconditionally loads local.properties (NDK toolchain info,
+      #   unused in JVM-only builds but the file must exist).
+      - name: Prepare JVM-only build
+        run: |
+          mkdir -p libvlcjni/libvlc
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Build signed release APKs
         env:
