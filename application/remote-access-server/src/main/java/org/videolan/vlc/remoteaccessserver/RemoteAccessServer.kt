@@ -98,6 +98,7 @@ import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.slf4j.LoggerFactory
 import org.videolan.libvlc.MediaPlayer
+import org.videolan.vlc.remoteaccessserver.routing.setupRouting
 import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.libvlc.util.MediaBrowser
@@ -775,9 +776,14 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
                 val isVideoPlaying = service.playlistManager.player.isVideoPlaying()
                 val waitForMediaEnd = service.waitForMediaEnd
                 val resetOnInteraction = service.resetOnInteraction
+                val audioTracks = if (isVideoPlaying) service.audioTracks?.map { WSTrack(it.getId(), it.getName()) } ?: listOf() else listOf()
+                val currentAudioTrack = if (isVideoPlaying) service.audioTrack else "-1"
+                val subtitleTracks = if (isVideoPlaying) service.spuTracks?.map { WSTrack(it.getId(), it.getName()) } ?: listOf() else listOf()
+                val currentSubtitleTrack = if (isVideoPlaying) service.spuTrack else "-1"
                 val nowPlaying = NowPlaying(media.title ?: "", media.artistName
                         ?: "", service.isPlaying, isVideoPlaying, service.getTime(), service.length, media.id, media.artworkURL
-                        ?: "", media.uri.toString(), getVolume(), speed, sleepTimer, waitForMediaEnd, resetOnInteraction, service.isShuffling, service.repeatType, bookmarks = bookmarks.map { WSBookmark(it.id, it.title, it.time) }, chapters = chapters.map { WSChapter(it.name, it.duration) })
+                        ?: "", media.uri.toString(), getVolume(), speed, sleepTimer, waitForMediaEnd, resetOnInteraction, service.isShuffling, service.repeatType, bookmarks = bookmarks.map { WSBookmark(it.id, it.title, it.time) }, chapters = chapters.map { WSChapter(it.name, it.duration) },
+                        audioTracks = audioTracks, currentAudioTrack = currentAudioTrack, subtitleTracks = subtitleTracks, currentSubtitleTrack = currentSubtitleTrack)
                 return nowPlaying
 
             }
@@ -1010,8 +1016,11 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
                           val duration: Long, val id: Long, val artworkURL: String, val uri: String, val volume: Int, val speed: Float,
                           val sleepTimer: Long, val waitForMediaEnd:Boolean, val resetOnInteraction:Boolean, val shuffle: Boolean, val repeat: Int,
                           val shouldShow: Boolean = PlaylistManager.playingState.value == true,
-                          val bookmarks: List<WSBookmark> = listOf(), val chapters: List<WSChapter> = listOf()) : WSMessage(WSMessageType.NOW_PLAYING)
+                          val bookmarks: List<WSBookmark> = listOf(), val chapters: List<WSChapter> = listOf(),
+                          val audioTracks: List<WSTrack> = listOf(), val currentAudioTrack: String = "-1",
+                          val subtitleTracks: List<WSTrack> = listOf(), val currentSubtitleTrack: String = "-1") : WSMessage(WSMessageType.NOW_PLAYING)
 
+    data class WSTrack(val id: String, val name: String)
     data class WSBookmark(val id:Long, val title: String, val time: Long)
     data class WSChapter(val title: String, val time: Long)
 
