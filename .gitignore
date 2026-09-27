@@ -78,3 +78,9 @@ libvlcpp.pc
 lib/
 /buildsystem/automation/certificates/
 /buildsystem/.check-commits/
+
+# Local AI workflow dirs (kept out of the public repo)
+.trellis/
+.claude/
+.agents/
+.pi/
