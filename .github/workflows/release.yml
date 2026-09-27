@@ -3,7 +3,7 @@ name: Release build
 on:
   push:
     tags:
-      - '*-52mzd.*'
+      - '*-DLNA.*'
   workflow_dispatch:
 
 permissions:
@@ -71,16 +71,36 @@ jobs:
           NOTES=$(cat <<'EOF'
           基于上游 3.7.2 Beta 2（29b65070f）的 52mzd fork 构建。
 
-          上游 3.7.2 Beta 2 变更（摘自 NEWS）：
+          ## Fork 定制
+
+          ### DLNA 投屏接收器（DMR）
+
+          把 VLC 变成 DLNA 数字媒体渲染器：局域网内的 DLNA 控制点（BubbleUPnP、Windows「投放」等）可以发现并直接向 VLC 推送媒体播放。
+
+          - 基于 jUPnP 3.0.5 + Jetty 实现 MediaRenderer:1 设备（AVTransport / RenderingControl / ConnectionManager），以前台服务 DmrService 运行
+          - 推送即自动播放（DMR 协议语义：暂停会被控制点判定会话结束而停止供流），并强制从头播放，避免跳到上次观看的残留进度
+          - 设置开关在「网络」分类下：TV 与平板 UI 可见（手机 UI 隐藏）
+          - 开关开启时随应用启动自动拉起服务（无开机自启，纯 opt-in）
+          - 支持自定义设备名
+
+          ### 投屏 / 后台播放的偏好轨道选择
+
+          上游的偏好轨道选择（已保存的轨道元数据 + 偏好语言）只挂在播放器 Activity 上，无 UI 的播放路径（投屏、后台播放）不生效。本 fork 将其下沉到 PlaylistManager 服务层：音轨在 ESAdded 时选择，字幕轨延迟到视频输出建立后再选择（避免轨道被假选中、需要二次触发才出字幕的问题）。
+
+          ### 低端设备首次播放黑屏修复
+
+          首次字幕渲染需要扫描系统字体构建 fontconfig 缓存，低端设备（Amlogic S4 盒子实测约 45 秒）首次播放会黑屏等待。现在应用启动 8 秒后会用 headless 播放器在后台播放一段 37KB 合成短片预热字体缓存（90 秒超时、自动让路真实播放）；实测冷启动后首次 DLNA 推送从约 46 秒缩短到 2 秒内起播。
+
+          ## 上游 3.7.2 Beta 2 变更（摘自 NEWS）
+
           - Manage video playback audio/subtitle tracks using the Remote access
           - Various Remote Access fixes
           - Fix some playback issues
           - Crash and behavior fixes
 
-          fork 定制：
-          - DLNA 投屏接收器（DMR）开关开启时随应用启动自动开启
+          ---
 
-          versionCode: 3070121（base）
+          versionCode: 3070122（base）· Android 5.0+（minSdk 21）· 完整提交历史见本仓库 git log
           EOF
           )
           gh release create "${{ github.ref_name }}" \
