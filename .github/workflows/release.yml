@@ -30,6 +30,11 @@ jobs:
       - name: Decode keystore
         run: echo "${{ secrets.VLC_FORK_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/vlc-fork-release.p12"
 
+      # JVM-only build: libvlcjni/libvlc is cloned only for native builds but is
+      # unconditionally included by settings.gradle; an empty dir passes config.
+      - name: Prepare JVM-only build dirs
+        run: mkdir -p libvlcjni/libvlc
+
       - name: Build signed release APKs
         env:
           PASSWORD_KEYSTORE: ${{ secrets.VLC_FORK_KEYSTORE_PASSWORD }}
