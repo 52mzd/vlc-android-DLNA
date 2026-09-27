@@ -1,0 +1,78 @@
+name: Release build
+
+on:
+  push:
+    tags:
+      - '*-52mzd.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle 9.7.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+
+      - name: Decode keystore
+        run: echo "${{ secrets.VLC_FORK_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/vlc-fork-release.p12"
+
+      - name: Build signed release APKs
+        env:
+          PASSWORD_KEYSTORE: ${{ secrets.VLC_FORK_KEYSTORE_PASSWORD }}
+        run: |
+          gradle :application:app:assembleSignedRelease \
+            -PkeyStoreFile="$RUNNER_TEMP/vlc-fork-release.p12" \
+            -Pstorealias="${{ secrets.VLC_FORK_KEY_ALIAS }}"
+
+      - name: Verify APK signatures
+        run: |
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          shopt -s nullglob
+          apks=(application/app/build/outputs/apk/signedRelease/*.apk)
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "No APK found" >&2; exit 1
+          fi
+          for apk in "${apks[@]}"; do
+            echo "== $(basename "$apk")"
+            "$APKSIGNER" verify --print-certs "$apk" | head -3
+          done
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES=$(cat <<'EOF'
+          基于上游 3.7.2 Beta 2（29b65070f）的 52mzd fork 构建。
+
+          上游 3.7.2 Beta 2 变更（摘自 NEWS）：
+          - Manage video playback audio/subtitle tracks using the Remote access
+          - Various Remote Access fixes
+          - Fix some playback issues
+          - Crash and behavior fixes
+
+          fork 定制：
+          - DLNA 投屏接收器（DMR）开关开启时随应用启动自动开启
+
+          versionCode: 3070121（base）
+          EOF
+          )
+          gh release create "${{ github.ref_name }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "VLC for Android ${{ github.ref_name }}" \
+            --notes "$NOTES" \
+            application/app/build/outputs/apk/signedRelease/*.apk
