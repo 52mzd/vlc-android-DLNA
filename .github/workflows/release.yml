@@ -40,11 +40,13 @@ jobs:
           mkdir -p libvlcjni/libvlc
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
+      # Task name must NOT carry a module path: application/app/build.gradle
+      # enables ABI splits by fully matching task names against /assemble.*Release/.
       - name: Build signed release APKs
         env:
           PASSWORD_KEYSTORE: ${{ secrets.VLC_FORK_KEYSTORE_PASSWORD }}
         run: |
-          gradle :application:app:assembleSignedRelease \
+          gradle assembleSignedRelease \
             -PkeyStoreFile="$RUNNER_TEMP/vlc-fork-release.p12" \
             -Pstorealias="${{ secrets.VLC_FORK_KEY_ALIAS }}"
 
